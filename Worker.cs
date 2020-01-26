@@ -25,10 +25,16 @@ namespace James
         {
             while (!stoppingToken.IsCancellationRequested)
             {
+				var timeToWait = DateTime.Now.AddSeconds(_appSettings.GetValue<int>("IntervalSecs"));
+
                 _logger.LogInformation("Worker running at: {time}",
                                        DateTimeOffset.Now);
 				LogSomething($"Logged message: Worker running at: {DateTimeOffset.Now}");
-                await Task.Delay(_appSettings.GetValue<int>("IntervalSecs"), stoppingToken);
+
+				while (timeToWait > DateTime.Now)
+				{
+					await Task.Delay(500, stoppingToken);
+				}
             }
         }
 
@@ -37,13 +43,15 @@ namespace James
 		{
 			try
 			{
-				var filePath = ".\\Workfile.txt";
+				var filePath = $"{AppDomain.CurrentDomain.BaseDirectory}";
 
 				if (!Directory.Exists(filePath))
 				{
 					_logger.LogError("Couldn't find path to file");
 					return;
 				}
+				
+				filePath += "\\Workfile.txt";
 
 				if (File.Exists(filePath))
 				{
@@ -104,7 +112,7 @@ namespace James
 			{
 				try
 				{
-					var errMsg = string.Format("The following fatal {0} was caught in EmvTerminalSettingsService.LogError(){1}{2}{1}StackTrace: {3}{1}Inner Exception: {4}",
+					var errMsg = string.Format("The following fatal {0} was caught in WorkerService.LogError(){1}{2}{1}StackTrace: {3}{1}Inner Exception: {4}",
 											   ex.GetType(),
 											   Environment.NewLine,
 											   ex.Message,

@@ -15,6 +15,6 @@ namespace James
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddHostedService<Worker>();
-                });
+                }).UseWindowsService();
     }
 }
