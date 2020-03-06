@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "WorkerService": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}
