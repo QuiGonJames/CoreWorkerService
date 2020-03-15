@@ -56,7 +56,7 @@ namespace James
             while (timeToWait > DateTime.Now && cancellationToken.IsCancellationRequested)
             {
                 await Task.Delay(100,
-                    cancellationToken);
+                                 cancellationToken);
             }
 
             await base.StopAsync(cancellationToken);
@@ -71,9 +71,22 @@ namespace James
 
 				if (!Directory.Exists(filePath))
 				{
-					_logger.LogError("Couldn't find path to file");
-					return;
-				}
+                    try
+                    {
+                        var result = Directory.CreateDirectory(filePath);
+
+                        if (!result.Exists)
+                        {
+                            _logger.LogError($"Couldn't find path to log file: {filePath}");
+                            return;
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+                        _logger.LogError($"Error creating directory: {filePath}");
+                        return;
+                    }
+                }
 				
 				filePath += "\\Workfile.txt";
 
@@ -145,8 +158,9 @@ namespace James
 												   ? "N/A"
 												   : ex.InnerException.Message);
 					errMsg += Environment.NewLine + logMessage;
-				}
-				catch
+                    _logger.LogError(errMsg);
+                }
+                catch
 				{
 					// Eat errors here
 				}
