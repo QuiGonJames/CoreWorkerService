@@ -13,6 +13,7 @@ namespace James
     {
         private readonly ILogger<Worker> _logger;
         private readonly IConfigurationSection _appSettings;
+        private bool _serviceRunning;
 
         public Worker(ILogger<Worker> logger,
                       IConfiguration configuration)
@@ -23,7 +24,9 @@ namespace James
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            while (!stoppingToken.IsCancellationRequested)
+            _serviceRunning = true;
+
+            while (!stoppingToken.IsCancellationRequested && _serviceRunning)
             {
 				var timeToWait = DateTime.Now.AddSeconds(_appSettings.GetValue<int>("IntervalSecs"));
 
@@ -31,14 +34,35 @@ namespace James
                                        DateTimeOffset.Now);
 				LogSomething($"Logged message: Worker running at: {DateTimeOffset.Now}");
 
-				while (timeToWait > DateTime.Now)
+				while (timeToWait > DateTime.Now && !stoppingToken.IsCancellationRequested)
 				{
-					await Task.Delay(500, stoppingToken);
+                    await Task.Delay(100,
+                                     stoppingToken);
 				}
+
+                if (stoppingToken.IsCancellationRequested)
+                {
+                    LogSomething($"Logged message: Worker process cancelled at : {DateTimeOffset.Now}");
+                }
             }
         }
 
-		[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0063:Use simple 'using' statement", Justification = "<Pending>")]
+        public override async Task StopAsync(CancellationToken cancellationToken)
+        {
+            var timeToWait = DateTime.Now.AddMilliseconds(300);
+
+            _serviceRunning = false;
+
+            while (timeToWait > DateTime.Now && cancellationToken.IsCancellationRequested)
+            {
+                await Task.Delay(100,
+                                 cancellationToken);
+            }
+
+            await base.StopAsync(cancellationToken);
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0063:Use simple 'using' statement", Justification = "<Pending>")]
 		private void LogSomething(string logMessage)
 		{
 			try
@@ -47,9 +71,22 @@ namespace James
 
 				if (!Directory.Exists(filePath))
 				{
-					_logger.LogError("Couldn't find path to file");
-					return;
-				}
+                    try
+                    {
+                        var result = Directory.CreateDirectory(filePath);
+
+                        if (!result.Exists)
+                        {
+                            _logger.LogError($"Couldn't find path to log file: {filePath}");
+                            return;
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+                        _logger.LogError($"Error creating directory: {filePath}");
+                        return;
+                    }
+                }
 				
 				filePath += "\\Workfile.txt";
 
@@ -121,8 +158,9 @@ namespace James
 												   ? "N/A"
 												   : ex.InnerException.Message);
 					errMsg += Environment.NewLine + logMessage;
-				}
-				catch
+                    _logger.LogError(errMsg);
+                }
+                catch
 				{
 					// Eat errors here
 				}
