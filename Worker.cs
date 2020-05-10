@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace James
 {
-	public class Worker : BackgroundService
+    public class Worker : BackgroundService
     {
         private readonly ILogger<Worker> _logger;
         private readonly IConfigurationSection _appSettings;
@@ -19,7 +19,7 @@ namespace James
                       IConfiguration configuration)
         {
             _logger = logger;
-            _appSettings = configuration.GetSection("ServiceControlSettings");
+            _appSettings = configuration?.GetSection("ServiceControlSettings");
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -28,17 +28,17 @@ namespace James
 
             while (!stoppingToken.IsCancellationRequested && _serviceRunning)
             {
-				var timeToWait = DateTime.Now.AddSeconds(_appSettings.GetValue<int>("IntervalSecs"));
+                var timeToWait = DateTime.Now.AddSeconds(_appSettings.GetValue<int>("IntervalSecs"));
 
                 _logger.LogInformation("Worker running at: {time}",
                                        DateTimeOffset.Now);
-				LogSomething($"Logged message: Worker running at: {DateTimeOffset.Now}");
+                LogSomething($"Logged message: Worker running at: {DateTimeOffset.Now}");
 
-				while (timeToWait > DateTime.Now && !stoppingToken.IsCancellationRequested)
-				{
+                while (timeToWait > DateTime.Now && !stoppingToken.IsCancellationRequested)
+                {
                     await Task.Delay(100,
-                                     stoppingToken);
-				}
+                                     stoppingToken).ConfigureAwait(true);
+                }
 
                 if (stoppingToken.IsCancellationRequested)
                 {
@@ -56,21 +56,21 @@ namespace James
             while (timeToWait > DateTime.Now && cancellationToken.IsCancellationRequested)
             {
                 await Task.Delay(100,
-                                 cancellationToken);
+                                 cancellationToken).ConfigureAwait(true);
             }
 
-            await base.StopAsync(cancellationToken);
+            await base.StopAsync(cancellationToken).ConfigureAwait(true);
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0063:Use simple 'using' statement", Justification = "<Pending>")]
-		private void LogSomething(string logMessage)
-		{
-			try
-			{
-				var filePath = $"{AppDomain.CurrentDomain.BaseDirectory}";
+        private void LogSomething(string logMessage)
+        {
+            try
+            {
+                var filePath = $"{AppDomain.CurrentDomain.BaseDirectory}";
 
-				if (!Directory.Exists(filePath))
-				{
+                if (!Directory.Exists(filePath))
+                {
                     try
                     {
                         var result = Directory.CreateDirectory(filePath);
@@ -81,90 +81,89 @@ namespace James
                             return;
                         }
                     }
-                    catch(Exception ex)
+                    catch (IOException)
                     {
+                        // This will probably fail b/c the error is in created the path to this, but just playing right now
                         _logger.LogError($"Error creating directory: {filePath}");
                         return;
                     }
+                    catch (Exception)
+                    {
+                        // TODO: Add general exception handling
+                        throw;
+                    }
                 }
-				
-				filePath += "\\Workfile.txt";
 
-				if (File.Exists(filePath))
-				{
-					var fileData = new FileInfo(filePath);
+                filePath += "\\Workfile.txt";
 
-					if (fileData.Length > 1048576)
-					{
-						var startingIndex = fileData.Length / 2;
-						var newLineList = new List<string>();
+                if (File.Exists(filePath))
+                {
+                    var fileData = new FileInfo(filePath);
 
-						if (startingIndex > int.MaxValue)
-						{
-							startingIndex = int.MaxValue;
-						}
+                    if (fileData.Length > 1048576)
+                    {
+                        var startingIndex = fileData.Length / 2;
+                        var newLineList = new List<string>();
 
-						using (var sw = File.OpenText(filePath))
-						{
-							sw.BaseStream.Position = startingIndex;
+                        if (startingIndex > int.MaxValue)
+                        {
+                            startingIndex = int.MaxValue;
+                        }
 
-							while (!sw.EndOfStream)
-							{
-								newLineList.Add(sw.ReadLine());
-							}
-						}
+                        using (var sw = File.OpenText(filePath))
+                        {
+                            sw.BaseStream.Position = startingIndex;
 
-						using (var sw = File.CreateText(filePath))
-						{
-							foreach (var fileLine in newLineList)
-							{
-								sw.WriteLine(fileLine);
-							}
+                            while (!sw.EndOfStream)
+                            {
+                                newLineList.Add(sw.ReadLine());
+                            }
+                        }
 
-							sw.WriteLine($"[{DateTime.Now:MM/dd/yyyy HH:mm:ss.ff}]:");
-							sw.WriteLine(logMessage);
-						}
-					}
-					else
-					{
-						using (var sw = File.AppendText(filePath))
-						{
-							sw.WriteLine($"[{DateTime.Now:MM/dd/yyyy HH:mm:ss.ff}]:");
-							sw.WriteLine(logMessage);
-							sw.Close();
-						}
-					}
-				}
-				else
-				{
-					using (var sw = File.CreateText(filePath))
-					{
-						sw.WriteLine($"[{DateTime.Now:MM/dd/yyyy HH:mm:ss.ff}]:");
-						sw.WriteLine(logMessage);
-						sw.Close();
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				try
-				{
-					var errMsg = string.Format("The following fatal {0} was caught in WorkerService.LogError(){1}{2}{1}StackTrace: {3}{1}Inner Exception: {4}",
-											   ex.GetType(),
-											   Environment.NewLine,
-											   ex.Message,
-											   ex.StackTrace,
-											   ex.InnerException == null
-												   ? "N/A"
-												   : ex.InnerException.Message);
-					errMsg += Environment.NewLine + logMessage;
+                        using (var sw = File.CreateText(filePath))
+                        {
+                            foreach (var fileLine in newLineList)
+                            {
+                                sw.WriteLine(fileLine);
+                            }
+
+                            sw.WriteLine($"[{DateTime.Now:MM/dd/yyyy HH:mm:ss.ff}]:");
+                            sw.WriteLine(logMessage);
+                        }
+                    }
+                    else
+                    {
+                        using (var sw = File.AppendText(filePath))
+                        {
+                            sw.WriteLine($"[{DateTime.Now:MM/dd/yyyy HH:mm:ss.ff}]:");
+                            sw.WriteLine(logMessage);
+                            sw.Close();
+                        }
+                    }
+                }
+                else
+                {
+                    using (var sw = File.CreateText(filePath))
+                    {
+                        sw.WriteLine($"[{DateTime.Now:MM/dd/yyyy HH:mm:ss.ff}]:");
+                        sw.WriteLine(logMessage);
+                        sw.Close();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                try
+                {
+                    var errMsg = $"The following fatal {ex.GetType()} was caught in WorkerService.LogError(){Environment.NewLine}{ex.Message}{Environment.NewLine}StackTrace: {ex.StackTrace}{Environment.NewLine}Inner Exception: {(ex.InnerException == null ? "N/A" : ex.InnerException.Message)}";
+                    errMsg += Environment.NewLine + logMessage;
                     _logger.LogError(errMsg);
                 }
                 catch
-				{
-					// Eat errors here
-				}
-			}
-		}
-	}
+                {
+                    // Eat errors here
+                }
+            }
+        }
+    }
 }

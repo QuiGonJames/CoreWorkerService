@@ -1,0 +1,40 @@
+## Linux Build ##
+# prev image clean
+docker rmi webapplication1:latest
+docker rmi mcr.microsoft.com/dotnet/core/runtime:3.1-buster-slim
+docker rmi mcr.microsoft.com/dotnet/core/aspnet:3.1-buster-slim
+docker rmi mcr.microsoft.com/dotnet/core/sdk:3.1-buster
+
+docker pull mcr.microsoft.com/dotnet/core/aspnet:3.1-buster-slim
+docker pull mcr.microsoft.com/dotnet/core/runtime:3.1-buster-slim
+docker pull mcr.microsoft.com/dotnet/core/sdk:3.1-buster
+
+docker build -f "c:\users\james\source\tempdelete\webapplication1\webapplication1\dockerfile" --force-rm -t webapplication1 "c:\users\james\source\tempdelete\webapplication1"
+# remove SDK intermediary image
+docker image prune -f
+# maybe? if keeping small: docker rmi $(docker images "mcr.microsoft.com/dotnet/core/sdk" -q)
+
+#SECURITY WARNING: You are building a Docker image from Windows against a non-Windows Docker host. All files and directories added to build context will have '-rwxr-xr-x' permissions. 
+# It is recommended to double check and reset permissions for sensitive files and directories.
+
+# run image -- remove https if cert isn't setup
+docker run -d -e "DOTNET_USE_POLLING_FILE_WATCHER=1" -e "ASPNETCORE_URLS=http://+:80;https://+:443" -p 8080:80 -p 44351:443 --name linux-weather-api webapplication1:latest
+
+## Windows Build ##
+# prev image clean
+docker rmi webapplication1:latest
+docker rmi mcr.microsoft.com/dotnet/core/runtime:3.1-nanoserver-1903
+docker rmi mcr.microsoft.com/dotnet/core/aspnet:3.1-nanoserver-1903
+docker rmi mcr.microsoft.com/dotnet/core/sdk:3.1-nanoserver-1903
+
+docker pull mcr.microsoft.com/dotnet/core/aspnet:3.1-nanoserver-1903
+docker pull mcr.microsoft.com/dotnet/core/runtime:3.1-nanoserver-1903
+docker pull mcr.microsoft.com/dotnet/core/sdk:3.1-nanoserver-1903
+
+docker build -f "c:\users\james\source\tempdelete\webapplication1\webapplication1\dockerfile" --force-rm -t webapplication1  "c:\users\james\source\tempdelete\webapplication1"
+# remove SDK intermediary image
+docker image prune -f
+# maybe? if keeping small: docker rmi $(docker images "mcr.microsoft.com/dotnet/core/sdk" -q)
+
+# run image -- remove https if cert isn't setup
+docker run -d -e "DOTNET_USE_POLLING_FILE_WATCHER=1" -e "ASPNETCORE_URLS=http://+:80;https://+:443" -p 8080:80 -p 44351:443 --name win-weather-api webapplication1:latest
