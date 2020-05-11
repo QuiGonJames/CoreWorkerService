@@ -7,6 +7,7 @@ WORKDIR /app
 #EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
+
 WORKDIR /src
 COPY ["WorkerService.csproj", ""]
 RUN dotnet restore "./WorkerService.csproj"
