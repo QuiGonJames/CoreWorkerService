@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -62,7 +63,6 @@ namespace James
             await base.StopAsync(cancellationToken).ConfigureAwait(true);
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0063:Use simple 'using' statement", Justification = "<Pending>")]
         private void LogSomething(string logMessage)
         {
             try
@@ -94,7 +94,7 @@ namespace James
                     }
                 }
 
-                filePath += "\\Workfile.txt";
+                filePath += $"{(Program.GetHostOsInfo() == OSPlatform.Windows ? "\\" : "/")}WorkFile.txt";
 
                 if (File.Exists(filePath))
                 {

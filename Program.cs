@@ -14,7 +14,7 @@ namespace James
             ? Host.CreateDefaultBuilder(args).ConfigureServices((hostContext, services) => services.AddHostedService<Worker>()).UseWindowsService()
             : Host.CreateDefaultBuilder(args).ConfigureServices((hostContext, services) => services.AddHostedService<Worker>()).UseConsoleLifetime();
 
-        private static OSPlatform GetHostOsInfo()
+        public static OSPlatform GetHostOsInfo()
         {
             var currentOs = Environment.OSVersion;
 
