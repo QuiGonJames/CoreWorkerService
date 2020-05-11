@@ -1,7 +1,9 @@
-﻿docker build -f "C:\Users\James\Source\repos\QuiGonJames\CoreWorkerService\Dockerfile" --force-rm -t workerservice:release --target base "C:\Users\James\Source\repos\QuiGonJames\CoreWorkerService"
+docker build -f "C:\Users\James\Source\repos\QuiGonJames\CoreWorkerService\Dockerfile" --force-rm -t workerservice:release --target base "C:\Users\James\Source\repos\QuiGonJames\CoreWorkerService"
 
 docker run -it -v "c:\users\james\source\repos\quigonjames\coreworkerservice:c:\app" -e "dotnet_use_polling_file_watcher=1" --name workerservice --entrypoint c:\app\workerservice.dll workerservice:release /noauth /anyuser /silent /nostatus /noclrwarn /nosecuritywarn /nofirewallwarn /nowowwarn /timeout:2147483646
 
 docker run -dt -v "c:\users\james\source\repos\quigonjames\coreworkerservice:c:\app" -v "c:\users\james\source\repos\quigonjames\coreworkerservice:c:\src" -v "c:\users\james\.nuget\packages\:c:\.nuget\fallbackpackages2" -v "c:\program files\dotnet\sdk\nugetfallbackfolder:c:\.nuget\fallbackpackages" -e "dotnet_use_polling_file_watcher=1" -e "nuget_packages=c:\.nuget\fallbackpackages2" -e "nuget_fallback_packages=c:\.nuget\fallbackpackages;c:\.nuget\fallbackpackages2" --name workerservice --entrypoint ["dotnet", "workerservice.dll"] workerservice:dev /noauth /anyuser /silent /nostatus /noclrwarn /nosecuritywarn /nofirewallwarn /nowowwarn /timeout:2147483646
 
 docker run -dt -v "C:\Users\James\Source\repos\QuiGonJames\CoreWorkerService:C:\app" -e "DOTNET_USE_POLLING_FILE_WATCHER=1" --name WorkerService --entrypoint C:\remote_debugger\x64\msvsmon.exe workerservice:dev /noauth /anyuser /silent /nostatus /noclrwarn /nosecuritywarn /nofirewallwarn /nowowwarn /fallbackloadremotemanagedpdbs /timeout:2147483646 /LogDebuggeeOutputToStdOut 
+
+-e "ASPNETCORE_URLS=https://+:443;http://+:80"
